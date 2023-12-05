@@ -1,4 +1,4 @@
-package com.test.exoplayer
+package com.test.exoplayer.front
 
 import android.content.Context
 import android.util.AttributeSet

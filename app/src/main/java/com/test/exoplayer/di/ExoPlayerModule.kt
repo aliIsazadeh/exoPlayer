@@ -1,4 +1,4 @@
-package com.test.exoplayer
+package com.test.exoplayer.di
 
 import android.app.Application
 import androidx.media3.common.Player

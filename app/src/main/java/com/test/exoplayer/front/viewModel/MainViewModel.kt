@@ -1,4 +1,4 @@
-package com.test.exoplayer
+package com.test.exoplayer.front.viewModel
 
 import android.net.Uri
 import androidx.compose.runtime.getValue
@@ -9,8 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.common.VideoSize
-import androidx.media3.exoplayer.ExoPlayer
+import com.test.exoplayer.model.VideoItem
 import com.test.exoplayer.metadata_reader.MetaDataReader
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -43,9 +42,7 @@ class MainViewModel @Inject constructor(
 
     init {
         player.prepare()
-        player.addListener(object : Player.Listener {
 
-        })
     }
 
     fun addVideoUri(uri: Uri) {
