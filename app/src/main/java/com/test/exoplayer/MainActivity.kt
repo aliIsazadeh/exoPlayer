@@ -49,6 +49,10 @@ import com.test.exoplayer.ui.theme.ExoPlayerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import android.content.res.Configuration
 import android.view.ViewGroup
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.media3.common.Player
@@ -59,8 +63,10 @@ import com.test.exoplayer.front.viewModel.MainViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @kotlin.OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
 
         setContent {
@@ -70,8 +76,10 @@ class MainActivity : ComponentActivity() {
 
 
             ExoPlayerTheme {
-               Surface {
-                   VideoScreen()
+               Scaffold()  {it ->
+                   Box(modifier = Modifier.fillMaxSize().padding(top = it.calculateTopPadding())){
+                       VideoScreen()
+                   }
                }
 
             }

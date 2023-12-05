@@ -83,6 +83,10 @@ dependencies {
     kapt("androidx.hilt:hilt-compiler:1.1.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 
+    implementation ("com.google.accompanist:accompanist-systemuicontroller:0.33.2-alpha")
+
+
+
 
 
 }

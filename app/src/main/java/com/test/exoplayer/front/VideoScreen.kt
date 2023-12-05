@@ -7,10 +7,17 @@ import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowInsets
+import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -20,10 +27,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.twotone.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,33 +48,91 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
+import com.google.accompanist.systemuicontroller.SystemUiController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.test.exoplayer.front.viewModel.MainViewModel
 import com.test.exoplayer.findActivity
+import com.test.exoplayer.ui.theme.ExoPlayerTheme
 
+@kotlin.OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoScreen(videoModel: MainViewModel = hiltViewModel<MainViewModel>()) {
 
+    val videoItems by videoModel.videoItems.collectAsState()
+    val selectVideoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            uri?.let(videoModel::addVideoUri)
+        }
+    )
+    val localContext = LocalContext.current
+    val currentOrientation = localContext.resources.configuration.orientation
+    var isFullScreenClicked by remember {
+        mutableStateOf(false)
+    }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+
+    val view = LocalView.current
+    val window = localContext.findActivity()?.window
+
+    val windowInsetsController =
+        window?.let { WindowCompat.getInsetsController(it, view ) }
+
+//    fun hideSystemBares(hide : Boolean){
+//        windowInsetsController?.hide(WindowInsets.Type.statusBars())
+//    }
 
 
-        val videoItems by videoModel.videoItems.collectAsState()
-        val selectVideoLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent(),
-            onResult = { uri ->
-                uri?.let(videoModel::addVideoUri)
+
+
+    Scaffold(topBar = {
+        AnimatedVisibility(currentOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = MaterialTheme.colorScheme.primary)
+            ) {
+                Text(
+                    text = "Exo Player Sample",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.CenterStart)
+                )
             }
-        )
+        }
+    }, floatingActionButton = {
+        IconButton(
+            onClick = { selectVideoLauncher.launch("video/mp4") },
+            modifier = Modifier
+                .background(shape = CircleShape, color = MaterialTheme.colorScheme.primary)
+                .padding(8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Select Video",
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+    }, modifier = Modifier.fillMaxSize()) { paddingValues ->
+
+
         val orientationState =
             remember { mutableIntStateOf(Configuration.ORIENTATION_PORTRAIT) }
 
@@ -91,13 +163,17 @@ fun VideoScreen(videoModel: MainViewModel = hiltViewModel<MainViewModel>()) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
+                .padding(top = paddingValues.calculateTopPadding())
         ) {
+
+
             AndroidView(
                 factory = { context ->
                     PlayerView(context).also {
                         it.player = videoModel.player
                         it.setFullscreenButtonClickListener { isFullScreen ->
                             if (isFullScreen) {
+                                isFullScreenClicked = true
                                 enterFullScreen(
                                     playerView = it,
                                     context = context,
@@ -131,13 +207,17 @@ fun VideoScreen(videoModel: MainViewModel = hiltViewModel<MainViewModel>()) {
                     .fillMaxWidth()
                     .aspectRatio(16 / 9f)
             )
+
             Spacer(modifier = Modifier.height(8.dp))
-            IconButton(onClick = { selectVideoLauncher.launch("video/mp4") }) {
-                Icon(
-                    imageVector = Icons.Default.FileOpen,
-                    contentDescription = "Select video"
-                )
-            }
+
+            Text(
+                text = "Video List", style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier
+                    .padding(16.dp)
+
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
@@ -148,6 +228,18 @@ fun VideoScreen(videoModel: MainViewModel = hiltViewModel<MainViewModel>()) {
                             .clickable { videoModel.playVideo(item.contentUris) }
                             .padding(16.dp))
                 }
+                if (videoItems.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Video List is empty! How about adding one?",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .padding(16.dp)
+
+                        )
+                    }
+                }
 
             }
 
@@ -157,6 +249,7 @@ fun VideoScreen(videoModel: MainViewModel = hiltViewModel<MainViewModel>()) {
     }
 
 }
+
 fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
@@ -170,9 +263,9 @@ private fun enterFullScreen(playerView: PlayerView, context: Context, player: Pl
     context.findActivity()?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
     val fullScreenPlayerView = FullScreenPlayerView(context)
-    if (fullScreenPlayerView.parent != null) {
-        (fullScreenPlayerView.parent as ViewGroup).removeView(fullScreenPlayerView)
-    }
+//    if (fullScreenPlayerView.parent != null) {
+//        (fullScreenPlayerView.parent as ViewGroup).removeView(fullScreenPlayerView)
+//    }
 
 
     // Create a dialog with a full screen theme
@@ -206,7 +299,8 @@ private fun enterFullScreen(playerView: PlayerView, context: Context, player: Pl
 }
 
 // Function to exit full screen mode
-@OptIn(UnstableApi::class) private fun exitFullScreen(player: Player, playerView: PlayerView, context: Context) {
+@OptIn(UnstableApi::class)
+private fun exitFullScreen(player: Player, playerView: PlayerView, context: Context) {
     // Restore portrait mode
     context.findActivity()?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
