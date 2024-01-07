@@ -81,35 +81,28 @@ fun VideoScreen(videoModel: MainViewModel = hiltViewModel<MainViewModel>()) {
         mutableStateOf(false)
     }
 
+    var dialogShow by remember {
+        mutableStateOf(false)
+    }
+
+    fun showDialog(flag : Boolean){
+        dialogShow = flag
+    }
+
 
 
 
 
 
     Scaffold(
-//
-//        topBar = {
-//            AnimatedVisibility(currentOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .background(color = MaterialTheme.colorScheme.primary)
-//                ) {
-//                    Text(
-//                        text = "Exo Player Sample",
-//                        style = MaterialTheme.typography.titleMedium,
-//                        color = MaterialTheme.colorScheme.onPrimary,
-//                        modifier = Modifier
-//                            .padding(16.dp)
-//                            .align(Alignment.CenterStart)
-//                    )
-//                }
-//            }
-//        },
+
         floatingActionButton = {
             AnimatedVisibility(currentOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
                 IconButton(
-                    onClick = { selectVideoLauncher.launch("video/mp4") },
+                    onClick = {
+                        showDialog(true)
+
+                    },
                     modifier = Modifier
                         .background(shape = CircleShape, color = MaterialTheme.colorScheme.primary)
                         .padding(8.dp),
@@ -156,7 +149,7 @@ fun VideoScreen(videoModel: MainViewModel = hiltViewModel<MainViewModel>()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp )
+                .padding(16.dp)
         ) {
 
 
@@ -234,6 +227,18 @@ fun VideoScreen(videoModel: MainViewModel = hiltViewModel<MainViewModel>()) {
                     }
                 }
 
+            }
+            if (dialogShow){
+                val url = remember {
+                    videoModel.urlText
+                }
+                SelectResource(
+                    onSelectLocal = { selectVideoLauncher.launch("video/mp4")},
+                    onSelectRemote = { videoModel.addVideoUrl(it) },
+                    onCancel = {showDialog(false) },
+                    selectUrl = {videoModel.selectUrl(it)} ,
+                    url = url.value
+                )
             }
 
         }

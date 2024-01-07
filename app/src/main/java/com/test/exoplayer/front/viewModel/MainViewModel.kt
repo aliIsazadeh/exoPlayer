@@ -15,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.net.URL
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,13 +43,25 @@ class MainViewModel @Inject constructor(
 
     init {
         player.prepare()
-
     }
 
     fun addVideoUri(uri: Uri) {
         savedStateHandle["videoUris"] = videoUris.value + uri
         player.addMediaItem(MediaItem.fromUri(uri))
     }
+
+
+    fun addVideoUrl(url: String) {
+        savedStateHandle["videoUris"] = videoUris.value + Uri.parse(url)
+        player.addMediaItem(MediaItem.fromUri( url))
+    }
+
+    val urlText = mutableStateOf("")
+
+    fun selectUrl(text: String) {
+        urlText.value = text
+    }
+
 
     fun playVideo(uri: Uri) {
         player.setMediaItem(
